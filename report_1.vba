@@ -129,7 +129,6 @@ Sub auto_open()
         .BCC = ""
         .Subject = "xxxxxxxxxxxxxxxxx " & day
         .HTMLBody = Body
-        '.SentOnBehalfOfName = "aaaaaaaaaaaaaaaaaaa"
         .SentOnBehalfOfName = "xxxxxxxxxxxxxxxxxx"
         '.Display
         .Send
@@ -167,7 +166,6 @@ Sub auto_open()
         .BCC = ""
         .Subject = "xxxxxxxxxxxxxxxxx " & day
         .HTMLBody = Body
-        '.SentOnBehalfOfName = "aaaaaaaaaaaaaaaaaaa"
         .SentOnBehalfOfName = "xxxxxxxxxxxxxxxxxx"
         '.Display
         .Send
@@ -201,7 +199,7 @@ Function RangetoHTML(rng As Range)
 
     TempFile = Environ$("temp") & "\" & Format(now, "dd-mm-yy h-mm-ss") & ".htm"
 
-    'Copy the range and create a new workbook to past the data in
+  
     rng.Copy
     Set TempWB = Workbooks.Add(1)
     With TempWB.Sheets(1)
@@ -216,7 +214,7 @@ Function RangetoHTML(rng As Range)
         On Error GoTo 0
     End With
 
-    'Publish the sheet to a htm file
+    
     With TempWB.PublishObjects.Add( _
          SourceType:=xlSourceRange, _
          Filename:=TempFile, _
@@ -226,7 +224,7 @@ Function RangetoHTML(rng As Range)
         .Publish (True)
     End With
 
-    'Read all data from the htm file into RangetoHTML
+   
     Set fso = CreateObject("Scripting.FileSystemObject")
     Set ts = fso.GetFile(TempFile).OpenAsTextStream(1, -2)
     RangetoHTML = ts.readall
@@ -234,10 +232,10 @@ Function RangetoHTML(rng As Range)
     RangetoHTML = Replace(RangetoHTML, "align=center x:publishsource=", _
                           "align=left x:publishsource=")
 
-    'Close TempWB
+    
     TempWB.Close savechanges:=False
 
-    'Delete the htm file we used in this function
+    
     Kill TempFile
 
     Set ts = Nothing

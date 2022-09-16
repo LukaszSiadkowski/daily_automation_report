@@ -198,8 +198,7 @@ cursor = cur = con.cursor()
 query = """SELECT loc_cntry_cd ,
 empl_login ,
 reports_to_login ,
-local_log_in_time ,
-local_log_out_time ,
+local_log_in ,
 coalesce (xxxx, 0) as xxxxx  ,
 coalesce (xxxxx, 0) as xxxxxx ,
 .....

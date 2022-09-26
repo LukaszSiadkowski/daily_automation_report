@@ -174,8 +174,13 @@ tickets_together.drop_duplicates(subset =["xxxxxx", "empl_login"], keep = 'last'
 tickets_together = tickets_together.drop('xxxxxxxx', axis=1)
 df_pivot_2 = tickets_together.pivot_table(index=["empl_login"], aggfunc='count', fill_value=0)
 df_pivot_2['empl_login'] = df_pivot_2.index
-df_pivot_2.columns=['Tickets Resolved or created', 'empl_login']
+if df_pivot_2.empty == True:
+    df_pivot_2.insert(0,'Tickets Resolved or created', 0)
+else:
+    df_pivot_2.columns=['Tickets Resolved or created', 'empl_login']
 df_pivot_2.reset_index(drop = True, inplace = True)
+
+
 
 
 second_join = pd.merge(first_join, df_pivot_2, on='empl_login', how='left')

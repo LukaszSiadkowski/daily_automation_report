@@ -4,17 +4,8 @@ Sub auto_open()
     Application.AlertBeforeOverwriting = False
     Application.DisplayAlerts = False
 
-    Workbooks.Open "xxxxxxxxxx\Daily\main_team.csv"
-    Windows("main_market.csv").Activate
-    Range("A2:U300").Select
-    Range("A2").Activate
-    Selection.Copy
-    Windows("market_1.xlsm").Activate
-    Sheet1.Select
-    Range("A5").Select
-    Sheet1.Paste
-    Windows("main_team.csv").Application.CutCopyMode = False
-    Windows("main_team.csv").Close
+    
+    
     
     
     Workbooks.Open "xxxxxxxxx\Daily\external_team.csv"
@@ -28,6 +19,21 @@ Sub auto_open()
     Sheet1.Paste
     Windows("external_team.csv").Application.CutCopyMode = False
     Windows("external_team.csv").Close
+                
+    Workbooks.Open "xxxxxxxxxx\Daily\main_team.csv"
+    Windows("main_market.csv").Activate
+    Range("A2:U300").Select
+    Range("A2").Activate
+    Selection.Copy
+    Windows("market_1.xlsm").Activate
+    Sheet1.Select
+    Range("A5").Select
+    Sheet1.Paste
+    Windows("main_team.csv").Application.CutCopyMode = False
+    Windows("main_team.csv").Close
+    
+    
+
     
     Range("A1:AU300").Borders.LineStyle = XlLineStyle.xlContinuous
     Range("A1:AU300").HorizontalAlignment = xlCenter

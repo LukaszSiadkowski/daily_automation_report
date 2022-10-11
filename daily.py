@@ -33,7 +33,17 @@ class Query(str):
         return self
 
     
-    def run_store(self, cursor):
+ 
+    def run_store_append(self, cursor, query_list):
+        cursor.execute(self)
+        df = pd.DataFrame.from_records(
+            iter(cursor), columns=[x[0] for x in cursor.description])
+        query_list.append(self)
+        return df
+
+
+
+def run_store(self, cursor):
         time_init= time.time()
         cursor.execute(self)
         df = pd.DataFrame.from_records(
@@ -42,12 +52,7 @@ class Query(str):
         return df
 
     
-    def run_store_append(self, cursor, query_list):
-        cursor.execute(self)
-        df = pd.DataFrame.from_records(
-            iter(cursor), columns=[x[0] for x in cursor.description])
-        query_list.append(self)
-        return df
+
 
 
 

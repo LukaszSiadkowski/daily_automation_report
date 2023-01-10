@@ -1,49 +1,38 @@
-import psycopg2
+import psycopg2, os, time, sys
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import numpy as np
-import os
-import time
-
+from pathlib import Path
+import win32com.client as win32
 
 con = psycopg2.connect(
-    dbname='xxx',
-    host='xxxxx',
-    port='xxxx',
-    user='xxx',
-    password='xxxx')
+    dbname='x',
+    host='x',
+    port='x',
+    user='x',
+    password='xxx')
 
 
 class Query(str):
 
-    
+    #just runs the query
     def run(self, cursor):
         cursor.execute(self)
         return self
 
-   
+    #just saves the query to a list
     def append(self, query_list):
         query_list.append(self)
         return self
 
-    
+    #runs and saves query to a list
     def run_append(self, cursor, query_list):
         cursor.execute(self)
         query_list.append(self)
         return self
 
-    
- 
-    def run_store_append(self, cursor, query_list):
-        cursor.execute(self)
-        df = pd.DataFrame.from_records(
-            iter(cursor), columns=[x[0] for x in cursor.description])
-        query_list.append(self)
-        return df
-
-
-
-def run_store(self, cursor):
+    #runs the query and stores the output in a table
+    def run_store(self, cursor):
         time_init= time.time()
         cursor.execute(self)
         df = pd.DataFrame.from_records(
@@ -51,8 +40,13 @@ def run_store(self, cursor):
         print('execution time (minutes) =', round((time.time()-time_init)/60, 1))
         return df
 
-    
-
+    #run, store and append
+    def run_store_append(self, cursor, query_list):
+        cursor.execute(self)
+        df = pd.DataFrame.from_records(
+            iter(cursor), columns=[x[0] for x in cursor.description])
+        query_list.append(self)
+        return df
 
 
 
@@ -67,280 +61,409 @@ def inspect(df, cols):
         return df[cols].head()
 
 cursor = cur = con.cursor()
-
-query = """SELECT loc_cntry_cd ,
-empl_login ,
-reports_to_login ,
-x ,
-x ,
-coalesce (x, 0) as x  ,
-.....
-FROM xx 
-where snapshot_date = current_date -1
-and x
-and x
-and x  
-order by reports_to_login """
-
-query_list = list()
-
-df = Query(query).run_store_append(cursor=cursor,
-                                       query_list=query_list)  #run_store
-
-df['x'] = df['x'].fillna(0)
-
-df.insert(loc=7, column='x', value=df['x']-df['x'])
-df.insert(loc=15, column='OCC', value=(df['x']+df['x'])/(df['x']+df['x']+df['x']))
-
-df.replace(0, np.nan, inplace=True)
-df.insert(loc=9, column='AHT', value=df['x']/df['x'])
-df.insert(loc=16, column='SLA60', value=df['x']/df['x'])
-
-cols_to_be_numeric = ['AHT', 'x', ........ ]
-for col in cols_to_be_numeric:
-     df[col] = pd.to_numeric(df[col])
-
-df['delete'] = 0
-
-cols_to_be_datetime = ['x', 'x', ......]
-for col in cols_to_be_datetime:
-    df[col] = pd.to_datetime(df[col], unit='s').dt.floor('S')
-
-cols_to_be_time = ['x', 'x', ......]
-for col in cols_to_be_time:
-     df[col] = df[col].dt.time
-
-df = df.replace((df.loc[0][20]), '')
-df = df.replace(0, '')
-
-df = df.drop(['x', 'x', ......] , axis=1)
-
-
-cursor = cur = con.cursor()
-
-query = """select xxxx ,
-associate_login ,
-case_count
-from xxxxx
-where (xxxx or xxxx)
-and date_trunc('day', closed_ts) = current_date -1
-and xxxx <> 'Phone' """
-
-query_list = list()
-
-pano = Query(query).run_store_append(cursor=cursor,
-                                       query_list=query_list) 
-
-
-df_pivot = pano.pivot_table(index=["x"], aggfunc='count', fill_value=0)
-df_pivot = df_pivot.drop('x', axis=1)
-df_pivot['x'] = df_pivot.index
-df_pivot.columns = ['x', 'x']
-
-first_join = pd.merge(df, df_pivot, on='x', how='left')
-
-cursor = cur = con.cursor()
-
-
-query = """select xxxxxxx ,
-submitted_by ,
-case_count
-from xxxxxxx 
-where date_trunc('day', create_date) = current_date -1
-and (submitted_by=xxxxxxx)"""
-
-
-query_list = list()
-
-tickets_1 = Query(query).run_store_append(cursor=cursor,
-                                       query_list=query_list)
-
-tickets_1.columns=['xxxxx', 'empl_login', 'case_count']
-
-
-query = """select xxxxxx ,
-resolved_by_login ,
-case_count
-from xxxxx 
-where date_trunc('day', resolved_date) = current_date -1
-and (resolved_by_login=xxxxxxx or .......)"""
-
-query_list = list()
-
-tickets_2 = Query(query).run_store_append(cursor=cursor,
-                                       query_list=query_list)
-
-tickets_2.columns=['xxxxx', 'empl_login', 'case_count']
-
-tickets_together = pd.concat([tickets_1, tickets_2])
-tickets_together.drop_duplicates(subset =["xxxxxx", "empl_login"], keep = 'last', inplace = True)
-
-
-tickets_together = tickets_together.drop('xxxxxxxx', axis=1)
-df_pivot_2 = tickets_together.pivot_table(index=["empl_login"], aggfunc='count', fill_value=0)
-df_pivot_2['empl_login'] = df_pivot_2.index
-if df_pivot_2.empty == True:
-    df_pivot_2.insert(0,'Tickets Resolved or created', 0)
-else:
-    df_pivot_2.columns=['Tickets Resolved or created', 'empl_login']
-df_pivot_2.reset_index(drop = True, inplace = True)
-
-
-
-
-second_join = pd.merge(first_join, df_pivot_2, on='empl_login', how='left')
-
-second_join.insert(loc=16, column='empl_login ', value=df['empl_login'])
-second_join.insert(loc=17, column='xxxx ', value=df['xxxxx'])
-second_join['SLA60'] = pd.to_numeric(second_join['SLA60'], errors='coerce').fillna(0).map("{:.2%}".format)
-second_join = second_join.replace('0.00%', '')
-second_join['OCC'] = pd.to_numeric(second_join['OCC'], errors='coerce').fillna(0).map("{:.2%}".format)
-second_join = second_join.replace('0.00%', '')
-
-
-second_join.to_csv('main_team.csv', index=False, encoding='utf-8')
-
-
-
-cursor = cur = con.cursor()
-
-
-query = """SELECT loc_cntry_cd ,
-empl_login ,
-reports_to_login ,
-local_log_in ,
-coalesce (xxxx, 0) as xxxxx  ,
-coalesce (xxxxx, 0) as xxxxxx ,
-.....
-FROM xxxxx.xxxxxx
-where snapshot_date = current_date -1
-and xxxxxx
-and xxxxxxxxx
-and (xxxxxxxx or xxxxxx or xxxxxxxxxxxx)  
-order by reports_to_login """
-
-query_list = list()
-
-df = Query(query).run_store_append(cursor=cursor,
-                                       query_list=query_list)  #run_store
-
-df['x'] = df['x'].fillna(0)
-
-df.insert(loc=7, column='x', value=df['x']-df['x'])
-df.insert(loc=15, column='OCC', value=(df['x']+df['x'])/(df['x']+df['x']+df['x']))
-
-df.replace(0, np.nan, inplace=True)
-df.insert(loc=9, column='x', value=df['x']/df['x'])
-df.insert(loc=16, column='SLA60', value=df['x']/df['x'])
-
-cols_to_be_numeric = ['xx', 'lunch', 'xx', ......]
-for col in cols_to_be_numeric:
-     df[col] = pd.to_numeric(df[col])
-
-df['delete'] = 0
-
-cols_to_be_datetime = ['AHT', 'x', 'x', ......]
-for col in cols_to_be_datetime:
-    df[col] = pd.to_datetime(df[col], unit='s').dt.floor('S')
-
-cols_to_be_time = ['x', 'delete', ......]
-for col in cols_to_be_time:
-     df[col] = df[col].dt.time
-
-df = df.replace((df.loc[0][18]), '')
-df = df.replace(0, '')
-
-df = df.drop(['x', 'x', 'delete', 'x', 'x'] , axis=1)
-
-
-cursor = cur = con.cursor()
-
-query = """select case_num ,
-x ,
-case_count
-from xxxxxx
-where xxxxxxx
-and date_trunc('day', closed_ts) = current_date -1
-and xxxxx <> 'Phone' """
-
-
-query_list = list()
-
-pano = Query(query).run_store_append(cursor=cursor,
-                                       query_list=query_list)
-
-
-df_pivot = pano.pivot_table(index=["x"], aggfunc='count', fill_value=0)
-df_pivot = df_pivot.drop('case_num', axis=1)
-df_pivot['empl_login'] = df_pivot.index
-df_pivot.columns = ['xxxxxxx', 'empl_login']
-
-first_join = pd.merge(df, df_pivot, on='empl_login', how='left')
-
-
-cursor = cur = con.cursor()
-
-query = """select xxxxxxxx ,
-submitted_by ,
-case_count
-from xxxxxxxx
-where date_trunc('day', create_date) = current_date -1
-and (submitted_by='xxxxxx' or xxxxxxxx)
-order by xxxxxxx"""
-
-query_list = list()
-
-tickets_1 = Query(query).run_store_append(cursor=cursor,
-                                       query_list=query_list)
-
-tickets_1.columns=['xxxxxxxx', 'empl_login', 'case_count']
-
-
-
-query = """select xxxxxxxx ,
-resolved_by_login ,
-case_count
-from xxxxxxx  
-where date_trunc('day', resolved_date) = current_date -1
-and (resolved_by_login='xxxxxxxx' or xxxxx)
-order by xxxxx"""
-
-query_list = list()
-
-tickets_2 = Query(query).run_store_append(cursor=cursor,
-                                       query_list=query_list)
-
-tickets_2.columns=['xxxxxx', 'empl_login', 'case_count']
-
-
-
-tickets_together = pd.concat([tickets_1, tickets_2])
-tickets_together.drop_duplicates(subset =["xxxx", "empl_login"], keep = 'last', inplace = True)
-tickets_together = tickets_together.drop('xxxxxxxx', axis=1)
-
-
-df_pivot_2 = tickets_together.pivot_table(index=["empl_login"], aggfunc='count', fill_value=0)
-df_pivot_2['empl_login'] = df_pivot_2.index
-
-if df_pivot_2.empty == True:
-    df_pivot_2.insert(0,'Tickets Resolved or created', 0)
-else:
-    df_pivot_2.columns=['Tickets Resolved or created', 'empl_login']
-
-df_pivot_2.reset_index(drop = True, inplace = True)
-
-
-
-second_join = pd.merge(first_join, df_pivot_2, on='empl_login', how='left')
-
-second_join.insert(loc=16, column='empl_login ', value=df['empl_login'])
-second_join.insert(loc=17, column='xxxxx ', value=df['xxxxxx'])
-second_join['SLA60'] = pd.to_numeric(second_join['SLA60'], errors='coerce').fillna(0).map("{:.2%}".format)
-second_join = second_join.replace('0.00%', '')
-second_join['OCC'] = pd.to_numeric(second_join['OCC'], errors='coerce').fillna(0).map("{:.2%}".format)
-second_join = second_join.replace('0.00%', '')
-second_join.to_csv('external_team.csv', index=False, encoding='utf-8')
-
-
-os.system('start "excel" "xxxxxxxx\\Daily\\market_1.xlsm"')
-
+d = date.today() - timedelta(days=1)
+dt = d.strftime("%d/%m/%y")
+
+timeframe = "current_date -1"
+
+
+germany = "'x'"
+romania = "'x'"
+poland = "'x'"
+france = "'x'"
+czech = "'x'"
+italy = "'x'"
+gbr = "'x'" 
+deu_s = "'x'"
+fra_s = "'x'"
+ita_s = "'x' "
+pol_t = "'x' "
+cze_t = "'x'"
+
+countries = [germany, romania, poland, france, czech, italy, gbr, deu_s, fra_s, ita_s, pol_t, cze_t]
+
+
+def save_location(country):
+    if country == germany:
+        filepath = Path(f'C:/xxxx/report for {d}.csv')
+        filepath.parent.mkdir(parents=True, exist_ok=True)
+        master_df.to_csv(filepath)
+    if country == romania:
+        filepath = Path(f'C:/xxxx/report for {d}.csv')
+        filepath.parent.mkdir(parents=True, exist_ok=True)
+        master_df.to_csv(filepath)
+    if country == poland:
+        filepath = Path(f'C:/xxxx/report for {d}.csv')
+        filepath.parent.mkdir(parents=True, exist_ok=True)
+        master_df.to_csv(filepath)
+    if country == france:
+        filepath = Path(f'C:/xxxx/report for {d}.csv')
+        filepath.parent.mkdir(parents=True, exist_ok=True)
+        master_df.to_csv(filepath)
+    if country == czech:
+        filepath = Path(f'C:/xxxx/report for {d}.csv')
+        filepath.parent.mkdir(parents=True, exist_ok=True)
+        master_df.to_csv(filepath)
+    if country == italy:
+        filepath = Path(f'C:/xxxx/report for {d}.csv')
+        filepath.parent.mkdir(parents=True, exist_ok=True)
+        master_df.to_csv(filepath)
+    if country == gbr:
+        filepath = Path(f'C:/xxxx/report for {d}.csv')
+        filepath.parent.mkdir(parents=True, exist_ok=True)
+        master_df.to_csv(filepath)    
+    if country == deu_s:
+        filepath = Path(f'C:/xxxx/report for {d}.csv')
+        filepath.parent.mkdir(parents=True, exist_ok=True)
+        master_df.to_csv(filepath)
+    if country == fra_s:
+        filepath = Path(f'C:/xxxx/report for {d}.csv')
+        filepath.parent.mkdir(parents=True, exist_ok=True)
+        master_df.to_csv(filepath)
+    if country == ita_s:
+        filepath = Path(f'C:/xxxx/report for {d}.csv')
+        filepath.parent.mkdir(parents=True, exist_ok=True)
+        master_df.to_csv(filepath)
+    if country == pol_t:
+        filepath = Path(f'C:/xxxx/report for {d}.csv')
+        filepath.parent.mkdir(parents=True, exist_ok=True)
+        master_df.to_csv(filepath)
+    if country == cze_t:
+        filepath = Path(f'C:/xxxx/report for {d}.csv')
+        filepath.parent.mkdir(parents=True, exist_ok=True)
+        master_df.to_csv(filepath)
+    
+        
+
+        
+def recipent(country):
+    if country == germany:
+        mail.To = 'x@x.x'
+        mail.CC = 'x@x.x'
+    if country == romania:
+        mail.To = 'x@x.x'
+    if country == poland:
+        mail.To = 'x@x.x'
+    if country == france:
+        mail.To = 'x@x.x'
+    if country == czech:
+        mail.To = 'x@x.x'
+    if country == italy:
+        mail.To = 'x@x.x'
+    if country == gbr:
+        mail.To = 'x@x.x'
+    if country == deu_s:
+        mail.To = 'x@x.x'
+    if country == fra_s:
+        mail.To = 'x@x.x'
+    if country == ita_s:
+        mail.To = 'x@x.x'
+    if country == pol_t:
+        mail.To = 'x@x.x'
+    if country == cze_t:
+        mail.To = 'x@x.x'
+        
+def subject(country):
+    if country == germany:
+        mail.Subject = f'Report for {dt}'
+    if country == romania:
+        mail.Subject = f'Report for {dt}'
+    if country == poland:
+        mail.Subject = f'Report for {dt}'
+    if country == france:
+        mail.Subject = f'Report for {dt}'
+    if country == czech:
+        mail.Subject = f'Report for {dt}'
+    if country == italy:
+        mail.Subject = f'Report for {dt}'
+    if country == gbr:
+        mail.Subject = f'Report for {dt}'
+    if country == deu_s:
+        mail.Subject = f'Report for {dt}'
+    if country == fra_s:
+        mail.Subject = f'Report for {dt}'
+    if country == ita_s:
+        mail.Subject = f'Report for {dt}'
+    if country == pol_t:
+        mail.Subject = f'Report for {dt}'
+    if country == cze_t:
+        mail.Subject = f'Report for {dt}'
+
+
+        
+         
+for country in countries:
+    if (country == germany) or (country == romania) or (country == france) or (country == italy) or (country == gbr):
+        employer_nm = "<> 'S'"
+    elif (country == poland) or (country == czech):
+        employer_nm = "<> 'T'"
+    elif (country == deu_s) or (country == fra_s) or (country == ita_s):
+        employer_nm = "= 'S'"
+    elif (country == pol_t) or (country == cze_t):
+        employer_nm = "= 'T'"
+        
+    query = f"""
+    with
+    pano as (
+    SELECT x ,
+    x ,
+    x ,
+    nullif(x,0) as x ,
+    nullif(x,0) as x ,
+    nullif((x - x),0) as x ,
+    nullif(x,0) as x ,
+    nullif(x,0) as x ,
+    nullif((x / x),0) as x ,
+    nullif(x,0) as x ,
+    nullif((x / x),0) as x ,
+    nullif((x / x),0) as x ,
+    nullif(x,0) as x ,
+    nullif(x,0) as x ,
+    convert(varchar(5), (x/x) * 100) + ' %' as x ,
+    nullif((x/x),0) as x ,
+    nullif(x, 0) as x
+    FROM x.x 
+    where snapshot_date = {timeframe}
+    and x  = 'A'
+    and employer_nm {employer_nm}
+    and supp_country IN ({country})
+    and x = 'x'
+    and x IN ('x', 'x', 'x Office')),
+    contact_number as (
+    select x ,
+    count(x) as x
+    from x.x
+    where supp_cntry_cd IN ({country})
+    and contact_dt = {timeframe}
+    and x < '60'
+    group by x )
+    SELECT x ,
+    x ,
+    x ,
+    x ,
+    x ,
+    x ,
+    x ,
+    x ,
+    x ,
+    x ,
+    x ,
+    x ,
+    x ,
+    x ,
+    x ,
+    x ,
+    x ,
+    x
+    FROM pano
+    LEFT JOIN contact_number
+    ON panorama.x = contact_number.x
+    ORDER BY x"""
+    
+    query_list = list()
+    df1 = Query(query).run_store_append(cursor=cursor, query_list=query_list)
+    cols_to_be_changed = ['x',
+                          'x',
+                          'x',
+                          'x',
+                          'x',
+                          'x',
+                          'x']
+    for col in cols_to_be_changed:
+        df1[col] = pd.to_numeric(df1[col])
+        df1[col] = pd.to_datetime(df1[col], unit='s').dt.floor('S')
+        df1[col] = df1[col].dt.time
+        
+        
+        
+        
+        
+    query = f"""
+        WITH
+        pano as (x),
+        a as (x),
+        b as (x),
+        c as (x),
+        d as (x),
+        e as (x),
+        f as (x),
+        g as (x)
+        SELECT x ,
+        x ,
+        x ,
+        x ,
+        x ,
+        x ,
+        x ,
+        x ,
+        x ,
+        x ,
+        x ,
+        nullif((isnull(x, 0) + isnull(x, 0) + isnull(x, 0) + isnull(x, 0) + isnull(x, 0) + isnull(x, 0)),0) as x,
+        x/nullif(x,0) as x
+        FROM pano
+        LEFT JOIN a
+        ON pano.x = a.a
+        LEFT JOIN b
+        ON pano.x = b.s
+        LEFT JOIN c
+        ON pano.x = c.d
+        LEFT JOIN d
+        ON pano.x = d.f
+        LEFT JOIN e
+        ON pano.x = e.g
+        LEFT JOIN f
+        ON pano.x = f.h
+        LEFT JOIN g
+        ON pano.x = g.j
+        ORDER BY x"""
+        
+    query_list = list()
+        
+    df2 = Query(query).run_store_append(cursor=cursor, query_list=query_list)
+    cols_to_be_changed = ['x',
+                              'x',
+                              'x',
+                              'x']
+
+    for col in cols_to_be_changed:
+            df2[col] = pd.to_numeric(df2[col])
+            df2[col] = pd.to_datetime(df2[col], unit='s').dt.floor('S')
+            df2[col] = df2[col].dt.time
+            
+            
+    query = f"""with 
+            pano as (x,
+            convert(varchar(5), ((coalesce(x,0)+coalesce(x,0)))/nullif((coalesce(x,0)+coalesce(x,0)+coalesce(x,0)),0)*100) + ' %' as x
+            FROM x.x ees
+            where snapshot_date = {timeframe}
+            and x  = 'A'
+            and employer_nm {employer_nm}
+            and supp_country IN ({country})
+            and x = 'x'
+            and x IN ('x', 'x', 'x Office')),
+            u as (
+            SELECT x as x,
+            nullif(ROUND(NVL(SUM(x),0) +
+            NVL(SUM(x),0) +
+            NVL(SUM(x),0) +
+            NVL(SUM(x),0) +
+            NVL(SUM(x),0) +
+            NVL(SUM(x),0) +
+            NVL(SUM(x),0) +
+            NVL(SUM(x),0) +
+            NVL(SUM(x),0) +
+            AS real_x,
+            nullif(NVL(SUM(x),0) +
+            NVL(SUM(x),0) +
+            NVL(SUM(x),0) +
+            NVL(SUM(x),0) +
+            NVL(SUM(x),0) +
+            NVL(SUM(x),0) +
+            NVL(SUM(x),0) +
+            NVL(SUM(x),0) +
+            AS planned_x,
+            convert(varchar(5), (real_x/planned_x) * 100) + ' %' as x
+            FROM x.x
+            WHERE snapshot_date = {timeframe}
+            AND supp_country IN ({country})
+            AND x ='x'
+            GROUP BY x)
+            SELECT
+                x ,
+                x ,
+                x ,
+                x,
+                x,
+                x,
+                x,
+                x,
+                x,
+                x,
+                x,
+                x,
+                x,
+                x,
+                x,
+                x,
+                real_x,
+                planned_x                
+                FROM panorama
+                    LEFT JOIN u
+                            ON pano.x = u.x
+                            ORDER BY x"""
+        
+    query_list = list()
+        
+    df3 = Query(query).run_store_append(cursor=cursor, query_list=query_list)
+       
+        
+    cols_to_be_changed = ['x',
+                              'x',
+                              'x',
+                              'x']
+        
+    for col in cols_to_be_changed:
+            df3[col] = pd.to_numeric(df3[col])
+            df3[col] = pd.to_datetime(df3[col], unit='s').dt.floor('S')
+            df3[col] = df3[col].dt.time
+            
+    master_df = pd.concat([df1, df2, df3], axis=1)
+    master_df.to_csv('master_source.csv', index=False, encoding='utf-8')
+    
+    d = date.today() - timedelta(days=1)
+    dt = d.strftime("%d/%m/%y")
+
+    save_location(country)
+
+    for x in range(1, 4):
+            os.system(f'start "excel" "C:\\xxxxx\\table_{x}.xlsm"')
+            time.sleep(10)
+            
+    
+    outlook = win32.gencache.EnsureDispatch('Outlook.Application') 
+    mail = outlook.CreateItem(0)
+               
+    recipent(country)
+    subject(country)
+    
+    table1 = open(r'C:\xxxxxxx\table_1.htm').read()
+    table2 = open(r'C:\xxxxxxx\table_2.htm').read()
+    table3 = open(r'C:\xxxxxxxxxx\table_3.htm').read()
+
+    mail.HTMLBody = f"""\
+        <html>
+        <head></head>
+        <body>
+        
+        Hello team,<br><br> 
+        Below are metrics for previous day<br><br>
+        
+        <b>Call Metrics:</b><br><br>
+        
+        {table1}<br><br>
+        
+        Reference:<br>
+
+        
+        <b>Back office metrics:</b><br><br>
+        
+        {table2}<br><br>
+        
+        Reference:<br>
+
+        
+        <b>Agent statistics:</b><br><br>
+        
+        {table3}<br>
+        
+        Reference:<br>
+
+        If you will have any questions please contact me<br><br>
+        
+        Kind regards,<br>
+        Lukasz<br>
+        </body>
+        </html>
+        """
+    mail.Send()

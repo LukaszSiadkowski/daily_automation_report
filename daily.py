@@ -60,6 +60,21 @@ def inspect(df, cols):
     elif len(cols)>1:
         return df[cols].head()
 
+    
+try:
+    xl = client.gencache.EnsureDispatch('Excel.Application')
+except AttributeError:
+    import os, re, sys, shutil
+    MODULE_LIST = [m.__name__ for m in sys.modules.values()]
+    for module in MODULE_LIST:
+        if re.match(r'win32com\.gen_py\..+', module):
+            del sys.modules[module]
+    shutil.rmtree(os.path.join(os.environ.get('LOCALAPPDATA'), 'Temp', 'gen_py'))
+    from win32com import client
+    xl = client.gencache.EnsureDispatch('Excel.Application')
+    
+    
+    
 cursor = cur = con.cursor()
 d = date.today() - timedelta(days=1)
 dt = d.strftime("%d/%m/%y")
